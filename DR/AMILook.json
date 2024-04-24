@@ -1,8 +1,8 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
- 
+
   "Description" : "AWS CloudFormation AMI Look Up Sample Template: Demonstrates how to dynamically specify an AMI ID. This template provisions an EC2 instance with an AMI ID that is based on the instance's type and region. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
- 
+
   "Parameters": {
     "InstanceType" : {
       "Description" : "EC2 instance type",
@@ -26,26 +26,26 @@
       "Default" : "amilookup.zip"
     }
   },
- 
+
   "Mappings" : {
     "AWSInstanceType2Arch" : {
-      "t1.micro"    : { "Arch" : "PV64"   },
+      "t1.micro"    : { "Arch" : "HVM64"   },
       "t2.micro"    : { "Arch" : "HVM64"  },
       "t2.small"    : { "Arch" : "HVM64"  },
       "t2.medium"   : { "Arch" : "HVM64"  },
-      "m1.small"    : { "Arch" : "PV64"   },
-      "m1.medium"   : { "Arch" : "PV64"   },
-      "m1.large"    : { "Arch" : "PV64"   },
-      "m1.xlarge"   : { "Arch" : "PV64"   },
-      "m2.xlarge"   : { "Arch" : "PV64"   },
-      "m2.2xlarge"  : { "Arch" : "PV64"   },
-      "m2.4xlarge"  : { "Arch" : "PV64"   },
+      "m1.small"    : { "Arch" : "HVM64"   },
+      "m1.medium"   : { "Arch" : "HVM64"   },
+      "m1.large"    : { "Arch" : "HVM64"   },
+      "m1.xlarge"   : { "Arch" : "HVM64"   },
+      "m2.xlarge"   : { "Arch" : "HVM64"   },
+      "m2.2xlarge"  : { "Arch" : "HVM64"   },
+      "m2.4xlarge"  : { "Arch" : "HVM64"   },
       "m3.medium"   : { "Arch" : "HVM64"  },
       "m3.large"    : { "Arch" : "HVM64"  },
       "m3.xlarge"   : { "Arch" : "HVM64"  },
       "m3.2xlarge"  : { "Arch" : "HVM64"  },
-      "c1.medium"   : { "Arch" : "PV64"   },
-      "c1.xlarge"   : { "Arch" : "PV64"   },
+      "c1.medium"   : { "Arch" : "HVM64"   },
+      "c1.xlarge"   : { "Arch" : "HVM64"   },
       "c3.large"    : { "Arch" : "HVM64"  },
       "c3.xlarge"   : { "Arch" : "HVM64"  },
       "c3.2xlarge"  : { "Arch" : "HVM64"  },
@@ -76,80 +76,75 @@
       "cc2.8xlarge" : { "Arch" : "HVM64"  }
     }
   },
- 
+
   "Resources" : {
-    "SampleInstance": {  
+    "SampleInstance": {
       "Type": "AWS::EC2::Instance",
       "Properties": {
         "InstanceType"   : { "Ref" : "InstanceType" },
-        "ImageId": { "Fn::GetAtt": [ "AMIInfo", "Id" ] },
-        "NetworkInterfaces": [ {
-      "AssociatePublicIpAddress": "true",
-      "DeviceIndex": "0",
-      "SubnetId" : {"Fn::ImportValue" : "Unique-SubnetId"}
-    } ]
+        "ImageId": { "Fn::GetAtt": [ "AMIInfo", "Id" ] }
       }
     },
- 
-    "AMIInfo": {
-      "Type": "Custom::AMIInfo",
-      "Properties": {
-        "ServiceToken": { "Fn::GetAtt" : ["AMIInfoFunction", "Arn"] },
-        "Region": { "Ref": "AWS::Region" },
-        "Architecture": { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "InstanceType" }, "Arch" ] }
-      }
-    },
- 
-    "AMIInfoFunction": {
-      "Type": "AWS::Lambda::Function",
-      "Properties": {
-        "Code": {
-            "S3Bucket": { "Ref": "S3Bucket" },
-            "S3Key": { "Ref": "S3Key" }
-        },
-        "Handler": { "Fn::Join" : [ "", [{ "Ref": "ModuleName" },".handler"] ] },
-        "Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] },        
-        "Runtime": "nodejs12.x",
-        "Timeout": "30"
-      }
-    },
- 
-    "LambdaExecutionRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [{
-              "Effect": "Allow",
-              "Principal": {"Service": ["lambda.amazonaws.com"]},
-              "Action": ["sts:AssumeRole"]
-          }]
-        },
-        "Path": "/",
-        "Policies": [{
-          "PolicyName": "root",
-          "PolicyDocument": {
-            "Version": "2012-10-17",
-            "Statement": [{
-                "Effect": "Allow",
-                "Action": ["logs:CreateLogGroup","logs:CreateLogStream","logs:PutLogEvents"],
-                "Resource": "arn:aws:logs:*:*:*"
-            },
-            {
-                "Effect": "Allow",
-                "Action": ["ec2:DescribeImages"],
-                "Resource": "*"
-            }]
-          }
-        }]
-      }
-    }    
+
+	"AMIInfo": {
+	  "Type": "Custom::AMIInfo",
+	  "Properties": {
+		"ServiceToken": { "Fn::GetAtt" : ["AMIInfoFunction", "Arn"] },
+		"Region": { "Ref": "AWS::Region" },
+		"Architecture": { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "InstanceType" }, "Arch" ] }
+	  }
+	},
+
+	"AMIInfoFunction": {
+	  "Type": "AWS::Lambda::Function",
+	  "Properties": {
+		"Code": {
+		  "S3Bucket": { "Ref": "S3Bucket" },
+		  "S3Key": { "Ref": "S3Key" }
+		},
+		"Handler": { "Fn::Join" : [ "", [{ "Ref": "ModuleName" },".handler"] ] },
+		"Runtime": "nodejs18.x",
+		"Timeout": "30",
+		"Role": { "Fn::GetAtt" : ["LambdaExecutionRole", "Arn"] }
+	  }
+	},
+
+	"LambdaExecutionRole": {
+	  "Type": "AWS::IAM::Role",
+	  "Properties": {
+		"AssumeRolePolicyDocument": {
+		  "Version": "2012-10-17",
+		  "Statement": [{
+			"Effect": "Allow",
+			"Principal": {"Service": ["lambda.amazonaws.com"]},
+			"Action": ["sts:AssumeRole"]
+		  }]
+		},
+		"Path": "/",
+		"Policies": [{
+		  "PolicyName": "root",
+		  "PolicyDocument": {
+			"Version": "2012-10-17",
+			"Statement": [{
+			  "Effect": "Allow",
+			  "Action": ["logs:CreateLogGroup","logs:CreateLogStream","logs:PutLogEvents"],
+			  "Resource": "arn:aws:logs:*:*:*"
+			},
+			{
+			  "Effect": "Allow",
+			  "Action": ["ec2:DescribeImages"],
+			  "Resource": "*"
+			}]
+		  }
+		}]
+	  }
+	}
   },
- 
+
   "Outputs" : {
     "AMIID" : {
       "Description": "The Amazon EC2 instance AMI ID.",
       "Value" : { "Fn::GetAtt": [ "AMIInfo", "Id" ] }
     }
-  }  
+  }
 }
